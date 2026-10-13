@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Northstar | Portfolio & Risk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar"><a class="brand" href="#dashboard"><span
+                    class="brand-mark">N</span><span>northstar<small>INVESTMENT OFFICE</small></span></a>
+            <div class="workspace">
+                <div class="avatar">RM</div>
+                <div><b>Riya Mehta</b><small>Portfolio analyst</small></div><span class="dots">•••</span>
+            </div>
+            <div class="nav-label">WORKSPACE</div>
+            <nav id="nav"><button class="nav-item active" data-view="dashboard"><span>▦</span> Overview</button><button
+                    class="nav-item" data-view="holdings"><span>◫</span> Holdings</button><button class="nav-item"
+                    data-view="transactions"><span>↔</span> Transactions</button><button class="nav-item"
+                    data-view="risk"><span>◉</span> Risk analysis</button><button class="nav-item"
+                    data-view="reports"><span>▤</span> Reports & exports</button></nav>
+            <div class="nav-label resources-label">RESOURCES</div><a class="nav-item link-item"
+                href="https://uncodemy.com/course/investment-banking-training-course-in-noida" target="_blank"
+                rel="noopener noreferrer"><span>↗</span> Investment banking training</a>
+            <div class="sidebar-bottom">
+                <div class="help-card"><span class="help-icon">✦</span><b>Build your finance skills</b>
+                    <p>Explore investment banking concepts and practical training.</p><a
+                        href="https://uncodemy.com/course/investment-banking-training-course-in-delhi" target="_blank"
+                        rel="noopener noreferrer">Explore course ↗</a>
+                </div>
+                <div class="sidebar-foot">Workspace · Personal portfolio<br><span id="dbStatus">Connecting to
+                        database…</span></div>
+            </div>
+        </aside>
+        <main class="main">
+            <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation">☰</button>
+                <div class="breadcrumb">Workspace <span>/</span> <b id="crumb">Overview</b></div>
+                <div class="top-actions"><span class="market-status"><i></i> Demo market data</span><button
+                        class="icon-btn" id="refreshBtn" title="Refresh data">↻</button>
+                    <div class="avatar avatar-small">RM</div>
+                </div>
+            </header>
+            <div class="content">
+                <section class="page-head">
+                    <div>
+                        <div class="eyebrow">MONDAY, OCTOBER 12, 2026</div>
+                        <h1 id="pageTitle">Portfolio overview</h1>
+                        <p id="pageSubtitle">A clear view of performance, allocation and portfolio risk.</p>
+                    </div>
+                    <div class="head-actions"><button class="btn btn-outline" id="exportBtn">⇩ Export
+                            CSV</button><button class="btn btn-primary" id="addAssetBtn">＋ Add asset</button></div>
+                </section>
+                <div id="alert" class="alert hidden" role="status"></div>
+                <section id="dashboardView" class="view">
+                    <div class="metric-grid">
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Total market value</span><span
+                                    class="metric-icon blue">◈</span></div>
+                            <div class="metric-value" id="marketValue">—</div>
+                            <div class="metric-foot"><span class="positive" id="pnlPct">—</span><span>overall
+                                    return</span></div>
+                        </article>
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Total cost basis</span><span
+                                    class="metric-icon violet">▤</span></div>
+                            <div class="metric-value" id="costValue">—</div>
+                            <div class="metric-foot"><span>Invested capital</span></div>
+                        </article>
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Unrealized P&amp;L</span><span
+                                    class="metric-icon green">↗</span></div>
+                            <div class="metric-value" id="pnlValue">—</div>
+                            <div class="metric-foot"><span id="pnlCaption">Based on entered prices</span></div>
+                        </article>
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Weighted portfolio beta</span><span
+                                    class="metric-icon orange">◉</span></div>
+                            <div class="metric-value" id="betaValue">—</div>
+                            <div class="metric-foot"><span id="riskBadge" class="risk-pill">Calculating risk</span>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="dashboard-grid">
+                        <article class="panel performance-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h2>Portfolio allocation</h2>
+                                    <p>Market value by asset class</p>
+                                </div><span class="panel-kicker">CURRENT HOLDINGS</span>
+                            </div>
+                            <div class="chart-wrap"><canvas id="allocationChart"
+                                    aria-label="Asset allocation chart"></canvas>
+                                <div id="emptyChart" class="empty-chart hidden">Add assets to see allocation.</div>
+                            </div>
+                            <div id="allocationLegend" class="legend"></div>
+                        </article>
+                        <article class="panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h2>Risk snapshot</h2>
+                                    <p>Exposure overview</p>
+                                </div><button class="text-btn" data-goto="risk">View details ↗</button>
+                            </div>
+                            <div class="risk-score-row">
+                                <div class="risk-score" id="riskScore">—</div>
+                                <div><b id="riskLabel">Portfolio beta</b>
+                                    <p>Weighted beta estimate</p>
+                                </div>
+                            </div>
+                            <div class="risk-track">
+                                <div id="riskTrackFill"></div>
+                            </div>
+                            <div class="risk-details">
+                                <div><span>Holdings</span><b id="holdingCount">—</b></div>
+                                <div><span>Asset classes</span><b id="assetTypes">—</b></div>
+                                <div><span>Largest sector</span><b id="largestSector">—</b></div>
+                            </div>
+                            <div class="notice"><span>ⓘ</span>
+                                <p>Risk indicators are estimates based on the sample inputs you enter, not investment
+                                    advice.</p>
+                            </div>
+                        </article>
+                    </div>
+                    <article class="panel holdings-panel">
+                        <div class="panel-head">
+                            <div>
+                                <h2>Top holdings</h2>
+                                <p>Your largest positions by market value</p>
+                            </div><button class="text-btn" data-goto="holdings">View all holdings ↗</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ASSET</th>
+                                        <th>SECTOR</th>
+                                        <th>QUANTITY</th>
+                                        <th>PRICE</th>
+                                        <th>MARKET VALUE</th>
+                                        <th>UNREALIZED P&amp;L</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topHoldings">
+                                    <tr>
+                                        <td colspan="6" class="loading">Loading holdings…</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
+                <section id="holdingsView" class="view hidden">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <h2>All holdings</h2>
+                                <p>Manage your assets and position details.</p>
+                            </div><button class="btn btn-primary" id="addAssetBtn2">＋ Add asset</button>
+                        </div>
+                        <div class="table-tools"><input id="assetSearch" class="search-input"
+                                placeholder="Search ticker, company or sector…"><select id="assetTypeFilter">
+                                <option value="">All asset classes</option>
+                                <option>Equity</option>
+                                <option>ETF</option>
+                                <option>Bond</option>
+                                <option>Mutual Fund</option>
+                                <option>Cash</option>
+                                <option>Crypto</option>
+                            </select></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ASSET</th>
+                                        <th>CLASS / SECTOR</th>
+                                        <th>QUANTITY</th>
+                                        <th>AVG. COST</th>
+                                        <th>LAST PRICE</th>
+                                        <th>MARKET VALUE</th>
+                                        <th>P&amp;L</th>
+                                        <th>ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allHoldings"></tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
+                <section id="transactionsView" class="view hidden">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <h2>Transaction history</h2>
+                                <p>Record purchases and sales against your holdings.</p>
+                            </div><button class="btn btn-primary" id="addTransactionBtn">＋ Record transaction</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>DATE</th>
+                                        <th>ASSET</th>
+                                        <th>TYPE</th>
+                                        <th>QUANTITY</th>
+                                        <th>PRICE</th>
+                                        <th>GROSS VALUE</th>
+                                        <th>NOTES</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTable"></tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
+                <section id="riskView" class="view hidden">
+                    <div class="metric-grid risk-metrics">
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Weighted beta</span><span class="metric-icon orange">◉</span>
+                            </div>
+                            <div class="metric-value" id="riskBetaBig">—</div>
+                            <div class="metric-foot">Market sensitivity estimate</div>
+                        </article>
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Sector concentration</span><span
+                                    class="metric-icon blue">▥</span></div>
+                            <div class="metric-value" id="sectorConcentration">—</div>
+                            <div class="metric-foot">Largest sector share</div>
+                        </article>
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Largest position</span><span
+                                    class="metric-icon violet">◈</span></div>
+                            <div class="metric-value" id="largestPosition">—</div>
+                            <div class="metric-foot">Share of portfolio value</div>
+                        </article>
+                        <article class="metric-card">
+                            <div class="metric-top"><span>Holdings count</span><span class="metric-icon green">▦</span>
+                            </div>
+                            <div class="metric-value" id="riskHoldings">—</div>
+                            <div class="metric-foot">Active positions</div>
+                        </article>
+                    </div>
+                    <div class="dashboard-grid">
+                        <article class="panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h2>Sector exposure</h2>
+                                    <p>Share of portfolio market value</p>
+                                </div>
+                            </div>
+                            <div id="sectorBars" class="sector-bars"></div>
+                        </article>
+                        <article class="panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h2>Risk methodology</h2>
+                                    <p>How these indicators are calculated</p>
+                                </div>
+                            </div>
+                            <div class="method-list">
+                                <div><b>Weighted beta</b>
+                                    <p>Sum of each asset beta × its portfolio weight.</p>
+                                </div>
+                                <div><b>Concentration</b>
+                                    <p>Largest sector market value divided by total market value.</p>
+                                </div>
+                                <div><b>Position sizing</b>
+                                    <p>Each holding's market value as a share of the portfolio.</p>
+                                </div>
+                                <div class="notice"><span>!</span>
+                                    <p>This prototype does not calculate VaR or historical volatility without a time
+                                        series of market returns.</p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+                <section id="reportsView" class="view hidden">
+                    <article class="panel reports-panel">
+                        <div class="panel-head">
+                            <div>
+                                <h2>Reports & exports</h2>
+                                <p>Take portfolio data with you for review or analysis.</p>
+                            </div>
+                        </div>
+                        <div class="report-grid">
+                            <div class="report-card">
+                                <div class="report-icon blue">▤</div>
+                                <h3>Holdings report</h3>
+                                <p>CSV with positions, cost basis, market value and unrealized P&amp;L.</p><button
+                                    class="btn btn-outline" id="holdingsCsvBtn">Download CSV ↗</button>
+                            </div>
+                            <div class="report-card">
+                                <div class="report-icon green">▥</div>
+                                <h3>Portfolio summary</h3>
+                                <p>Quick snapshot of total value, returns, beta and asset allocation.</p><button
+                                    class="btn btn-outline" id="summaryCopyBtn">Copy summary ↗</button>
+                            </div>
+                            <div class="report-card">
+                                <div class="report-icon orange">↔</div>
+                                <h3>Transaction history</h3>
+                                <p>Review buys and sells recorded in this workspace.</p><button class="btn btn-outline"
+                                    id="transactionsCsvBtn">Download CSV ↗</button>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+                <footer class="footer"><span>Northstar Portfolio Analytics · Demo workspace</span><span>For educational
+                        use only · Not investment advice</span></footer>
+            </div>
+        </main>
+    </div>
+    <dialog id="assetDialog" class="modal">
+        <form id="assetForm">
+            <div class="modal-head">
+                <div><span class="eyebrow">PORTFOLIO SETUP</span>
+                    <h2 id="assetDialogTitle">Add an asset</h2>
+                </div><button type="button" class="close-btn" data-close="assetDialog" aria-label="Close">×</button>
+            </div><input type="hidden" id="assetId">
+            <div class="form-grid"><label>Ticker symbol<input required id="symbol" maxlength="16"
+                        placeholder="e.g. AAPL"></label><label>Company / asset name<input required id="name"
+                        placeholder="e.g. Apple Inc."></label><label>Asset class<select id="assetType">
+                        <option>Equity</option>
+                        <option>ETF</option>
+                        <option>Bond</option>
+                        <option>Mutual Fund</option>
+                        <option>Cash</option>
+                        <option>Crypto</option>
+                    </select></label><label>Sector<input required id="sector"
+                        placeholder="e.g. Technology"></label><label>Quantity<input required id="quantity" type="number"
+                        min="0" step="any"></label><label>Average cost (₹)<input required id="avgCost" type="number"
+                        min="0" step="any"></label><label>Current price (₹)<input required id="currentPrice"
+                        type="number" min="0" step="any"></label><label>Beta<input required id="beta" type="number"
+                        min="0" step="any" value="1"></label></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline"
+                    data-close="assetDialog">Cancel</button><button class="btn btn-primary" type="submit">Save
+                    asset</button></div>
+        </form>
+    </dialog>
+    <dialog id="transactionDialog" class="modal">
+        <form id="transactionForm">
+            <div class="modal-head">
+                <div><span class="eyebrow">PORTFOLIO ACTIVITY</span>
+                    <h2>Record transaction</h2>
+                </div><button type="button" class="close-btn" data-close="transactionDialog"
+                    aria-label="Close">×</button>
+            </div>
+            <div class="form-grid"><label>Asset ticker<select required id="txSymbol"></select></label><label>Transaction
+                    type<select id="txType">
+                        <option>BUY</option>
+                        <option>SELL</option>
+                    </select></label><label>Quantity<input required id="txQuantity" type="number" min="0.0001"
+                        step="any"></label><label>Price per unit (₹)<input required id="txPrice" type="number"
+                        min="0.01" step="any"></label><label>Transaction date<input required id="txDate"
+                        type="date"></label><label>Notes<input id="txNotes" maxlength="250"
+                        placeholder="Optional note"></label></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline"
+                    data-close="transactionDialog">Cancel</button><button class="btn btn-primary" type="submit">Save
+                    transaction</button></div>
+        </form>
+    </dialog>
+    <div id="confirmDialog" class="toast-confirm hidden"><span id="confirmText">Are you sure?</span><button
+            id="confirmYes" class="btn btn-danger">Delete</button><button id="confirmNo"
+            class="btn btn-outline">Cancel</button></div>
+</body>
+
+</html>
